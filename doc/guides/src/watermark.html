@@ -1,0 +1,18 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Watermark</title>
+<link rel="stylesheet" href="guide.css">
+<style>
+@page { size: A4; margin: 0; }
+html, body { background: transparent; }
+.watermark { position: absolute; left: 30mm; top: 100mm; width: 150mm; text-align: center;
+  transform: rotate(-24deg); opacity: .06; }
+.watermark img { width: 46mm; height: 46mm; border-radius: 11mm; }
+.watermark .wm-name { font-size: 34pt; font-weight: 800; letter-spacing: -1pt; color: #312e81; margin-top: 3mm; }
+.watermark .wm-by { font-size: 12pt; font-weight: 600; color: #312e81; }
+</style></head><body>
+<div class="watermark">
+  <img src="wm-logo.png" alt="">
+  <div class="wm-name">Chronoverse</div>
+  <div class="wm-by">Developed by Sanket Santosh Vidya Manohar</div>
+</div>
+</body></html>

@@ -1,0 +1,9 @@
+# Normalise line endings so macOS, Linux and Windows contributors share
+# identical files.
+* text=auto eol=lf
+*.bat text eol=crlf
+*.png binary
+*.jpg binary
+*.pdf binary
+*.ttf binary
+*.otf binary

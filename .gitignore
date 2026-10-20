@@ -1,0 +1,24 @@
+# OS and editor files
+.DS_Store
+Thumbs.db
+*.swp
+*.iml
+*.ipr
+*.iws
+.idea/
+.history/
+
+# Dart / Flutter
+.dart_tool/
+.packages
+.flutter-plugins
+.flutter-plugins-dependencies
+/pubspec.lock
+build/
+coverage/
+doc/api/
+
+# Fonts used only to render screenshots locally
+example/test/fonts/
+# Raw screenshot renders (exported copies live in doc/screenshots)
+example/test/goldens/

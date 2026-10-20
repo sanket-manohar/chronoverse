@@ -1,0 +1,50 @@
+name: Release
+
+# Push a tag such as v0.1.0 to publish that version to pub.dev and create a
+# release with the PDF guides attached. The tag must match pubspec.yaml.
+on:
+  push:
+    tags: ['v[0-9]+.[0-9]+.[0-9]+*']
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    environment: pub.dev
+    permissions:
+      id-token: write # pub.dev automated publishing
+      contents: write # release with assets
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check tag matches pubspec version
+        run: |
+          version=$(grep '^version:' pubspec.yaml | awk '{print $2}')
+          test "v$version" = "${GITHUB_REF_NAME}" || { echo "Tag ${GITHUB_REF_NAME} does not match pubspec version $version"; exit 1; }
+      - uses: dart-lang/setup-dart@v1
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+      - run: flutter pub get
+      - run: flutter analyze
+      - run: flutter test
+      - run: flutter pub publish --dry-run
+      - name: Check if this version is already on pub.dev
+        id: published
+        run: |
+          version=${GITHUB_REF_NAME#v}
+          if curl -fsS https://pub.dev/api/packages/chronoverse | grep -q "\"version\":\"$version\""; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Publish to pub.dev
+        if: steps.published.outputs.exists != 'true'
+        run: flutter pub publish --force
+      - name: Create release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          version=${GITHUB_REF_NAME#v}
+          awk -v v="## $version" '$0==v{f=1;next} /^## /{f=0} f' CHANGELOG.md > notes.md
+          gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1 && exit 0
+          gh release create "$GITHUB_REF_NAME" --title "Chronoverse $version" --notes-file notes.md \
+            doc/guides/Chronoverse-Installation-Guide.pdf \
+            doc/guides/Chronoverse-Integration-Guide.pdf \
+            doc/brand/banner.jpg doc/brand/logo.png

@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Chronoverse Installation Guide</title>
+<link rel="stylesheet" href="guide.css"></head><body>
+
+<section class="cover">
+  <img class="logo" src="../../brand/logo.png" alt="">
+  <h1>Chronoverse</h1>
+  <h2>Installation Guide</h2>
+  <p class="lead">Everything you need to add Chronoverse to a Flutter project on macOS or Windows, verify it,
+  and keep it up to date.</p>
+  <div class="meta">Version {{VERSION}} · {{DATE}}<br>Developed by Sanket Santosh Vidya Manohar<br>BSD 3-Clause License · Zero dependencies</div>
+  <img class="shot" src="../../screenshots/month.png" alt="">
+</section>
+
+
+<section class="toc">
+  <h1 style="color:#312e81">Contents</h1>
+  <ol>
+    <li>About Chronoverse</li>
+    <li>Requirements</li>
+    <li>Preparing a macOS machine</li>
+    <li>Preparing a Windows machine</li>
+    <li>Adding Chronoverse to your app</li>
+    <li>Verifying the installation</li>
+    <li>Running the example gallery</li>
+    <li>Platform notes</li>
+    <li>Updating, pinning and removing</li>
+    <li>Troubleshooting</li>
+    <li>Disclaimer</li>
+  </ol>
+  <div class="note"><b>Next step.</b> After installing, continue with the <b>Chronoverse Integration Guide</b>,
+  which explains every widget, function and option with code.</div>
+</section>
+
+<h1 class="section"><span class="num">1</span>About Chronoverse</h1>
+<p>Chronoverse is an all-in-one calendar and date toolkit for Flutter. A single package gives you month,
+week, year, schedule, agenda and planner views; single, multiple and range pickers; typed date input;
+recurrence; time zones; calendar conversions; and more than 80 ready-made date and time functions.</p>
+<div class="grid2">
+  <div class="card"><h3>Zero dependencies</h3>Chronoverse depends only on the Flutter SDK. It cannot cause version
+  conflicts with other packages in your project.</div>
+  <div class="card"><h3>No setup</h3>No initialization call, no platform configuration, no permissions and no
+  localization delegates are required.</div>
+  <div class="card"><h3>Every platform</h3>Android, iOS, web, macOS, Windows and Linux, from one code base.</div>
+  <div class="card"><h3>Two entry points</h3><code>chronoverse.dart</code> for widgets and functions;
+  <code>core.dart</code> for pure Dart functions without any UI.</div>
+</div>
+
+<h1 class="section"><span class="num">2</span>Requirements</h1>
+<table>
+  <tr><th>Item</th><th>Minimum</th><th>Notes</th></tr>
+  <tr><td>Flutter SDK</td><td>3.24.0</td><td>Stable channel recommended.</td></tr>
+  <tr><td>Dart SDK</td><td>3.5.0</td><td>Included with Flutter.</td></tr>
+  <tr><td>Development OS</td><td>macOS 12 or Windows 10 (64-bit)</td><td>Linux is also supported.</td></tr>
+  <tr><td>Disk space</td><td>about 3 MB</td><td>For the package itself.</td></tr>
+  <tr><td>Internet</td><td>Only to download</td><td>The package never connects to the network at run time.</td></tr>
+</table>
+<p>Check your installed versions in a terminal:</p>
+<pre><code>flutter --version
+dart --version</code></pre>
+<div class="tip">If your Flutter SDK is older than 3.24.0, run <code>flutter upgrade</code> before continuing.</div>
+
+<h1 class="section"><span class="num">3</span>Preparing a macOS machine</h1>
+<p>Skip this section if Flutter already runs on your Mac (<code>flutter doctor</code> shows no errors for the
+platforms you build for).</p>
+<ol class="steps">
+  <li><b>Download the Flutter SDK</b> for macOS from the official Flutter website. Choose the build that
+  matches your processor (ARM or x64).</li>
+  <li><b>Extract it</b> to a folder without spaces, for example <code>~/development/flutter</code>.</li>
+  <li><b>Add Flutter to your PATH.</b> Open the Terminal app and run:
+<pre><code>echo 'export PATH="$HOME/development/flutter/bin:$PATH"' &gt;&gt; ~/.zshrc
+source ~/.zshrc</code></pre></li>
+  <li><b>Install the platform build tools</b> for the targets you need: the official iOS/macOS developer tools
+  from the Mac App Store for iOS and macOS apps, and the Android SDK for Android apps.</li>
+  <li><b>Run the doctor</b> and fix anything it reports:
+<pre><code>flutter doctor</code></pre></li>
+  <li><b>Enable desktop and web targets</b> if you want them:
+<pre><code>flutter config --enable-macos-desktop
+flutter config --enable-web</code></pre></li>
+</ol>
+<div class="note">Chronoverse contains no native code, so it needs nothing extra on macOS: no pod files,
+entitlements or Info.plist keys.</div>
+
+<h1 class="section"><span class="num">4</span>Preparing a Windows machine</h1>
+<p>Skip this section if Flutter already runs on your PC.</p>
+<ol class="steps">
+  <li><b>Download the Flutter SDK</b> for Windows from the official Flutter website.</li>
+  <li><b>Extract it</b> to a folder without spaces or special permissions, for example
+  <code>C:\src\flutter</code>. Avoid <code>C:\Program Files\</code>.</li>
+  <li><b>Add Flutter to your PATH.</b> Open <i>Start → Edit environment variables for your account</i>, select
+  <code>Path</code>, choose <i>Edit → New</i> and add <code>C:\src\flutter\bin</code>. Close and reopen any terminal.</li>
+  <li><b>Turn on Developer Mode</b> (<i>Settings → Privacy &amp; security → For developers</i>). Flutter needs it to
+  create symbolic links when building.</li>
+  <li><b>Install the platform build tools</b> for the targets you need: the C++ desktop build tools for Windows
+  apps, and the Android SDK for Android apps.</li>
+  <li><b>Run the doctor</b> from a Command Prompt or terminal and fix anything it reports:
+<pre><code>flutter doctor</code></pre></li>
+  <li><b>Enable desktop and web targets</b> if you want them:
+<pre><code>flutter config --enable-windows-desktop
+flutter config --enable-web</code></pre></li>
+</ol>
+<div class="note">Chronoverse uses only Dart and Flutter code, so Windows needs no extra libraries, DLLs or
+registry settings. File endings are normalised in the package, so it behaves the same whether your
+editor uses Windows or Unix line endings.</div>
+
+<h1 class="section"><span class="num">5</span>Adding Chronoverse to your app</h1>
+<h2>Option A: command line (recommended)</h2>
+<p>From the root folder of your Flutter project (the folder containing <code>pubspec.yaml</code>), run:</p>
+<pre><code>flutter pub add chronoverse</code></pre>
+<p>This adds the latest version to <code>pubspec.yaml</code> and downloads it. The same command works in the
+macOS Terminal, the Windows Command Prompt and any editor's built-in terminal.</p>
+
+<h2>Option B: edit pubspec.yaml</h2>
+<pre><code>dependencies:
+  flutter:
+    sdk: flutter
+  chronoverse: ^{{VERSION}}</code></pre>
+<p>Save the file, then run:</p>
+<pre><code>flutter pub get</code></pre>
+
+<h2>Import it</h2>
+<pre><code><span class="c">// Widgets and every function:</span>
+<span class="k">import</span> <span class="s">'package:chronoverse/chronoverse.dart'</span>;
+
+<span class="c">// Pure Dart functions only (servers, command-line tools, isolates):</span>
+<span class="k">import</span> <span class="s">'package:chronoverse/core.dart'</span>;</code></pre>
+<div class="tip">You do not need to add anything to <code>MaterialApp</code>. Languages, themes and
+time zones work out of the box.</div>
+
+<h1 class="section"><span class="num">6</span>Verifying the installation</h1>
+<p>Replace the contents of <code>lib/main.dart</code> with this small app:</p>
+<pre><code><span class="k">import</span> <span class="s">'package:chronoverse/chronoverse.dart'</span>;
+<span class="k">import</span> <span class="s">'package:flutter/material.dart'</span>;
+
+<span class="k">void</span> main() =&gt; runApp(<span class="k">const</span> MyApp());
+
+<span class="k">class</span> MyApp <span class="k">extends</span> StatelessWidget {
+  <span class="k">const</span> MyApp({<span class="k">super</span>.key});
+
+  @override
+  Widget build(BuildContext context) {
+    <span class="k">return</span> MaterialApp(
+      theme: ThemeData(colorSchemeSeed: Colors.indigo),
+      home: Scaffold(
+        appBar: AppBar(title: Text(<span class="s">'Leap year? ${Chrono.isLeapYear(2028)}'</span>)),
+        body: ChronoCalendar(
+          onDaySelected: (day) =&gt; debugPrint(Chrono.format(day, <span class="s">'EEEE, d MMMM yyyy'</span>)),
+        ),
+      ),
+    );
+  }
+}</code></pre>
+<p>Run it on any device:</p>
+<pre><code>flutter run            <span class="c"># pick a device when asked</span>
+flutter run -d macos   <span class="c"># on a Mac</span>
+flutter run -d windows <span class="c"># on a Windows PC</span>
+flutter run -d chrome  <span class="c"># in the browser</span></code></pre>
+<p>You should see a month calendar under the title <i>Leap year? true</i>. Tap a day and its full date is
+printed in the console. Swipe left or right to change month, and tap the month title to jump to another
+year.</p>
+
+<h1 class="section"><span class="num">7</span>Running the example gallery</h1>
+<p>The package source includes a gallery app that demonstrates every widget. Download the source from the
+project repository, then:</p>
+<pre><code>cd chronoverse/example
+flutter pub get
+flutter run</code></pre>
+<div class="shots">
+  <figure><img src="../../screenshots/planner.png">Planner</figure>
+  <figure><img src="../../screenshots/booking.png">Booking</figure>
+  <figure><img src="../../screenshots/pickers.png">Pickers</figure>
+</div>
+<p>On a wide window the gallery shows a side menu; on a phone it shows a bottom bar. Use the moon icon to
+switch to dark mode.</p>
+
+<h1 class="section"><span class="num">8</span>Platform notes</h1>
+<table>
+  <tr><th>Platform</th><th>Extra setup</th><th>Notes</th></tr>
+  <tr><td>Android</td><td>None</td><td>No permissions are used.</td></tr>
+  <tr><td>iOS</td><td>None</td><td>No Info.plist keys are needed.</td></tr>
+  <tr><td>Web</td><td>None</td><td>Works with every web renderer.</td></tr>
+  <tr><td>macOS</td><td>None</td><td>No entitlements are needed.</td></tr>
+  <tr><td>Windows</td><td>None</td><td>Developer Mode is needed by Flutter itself, not by Chronoverse.</td></tr>
+  <tr><td>Linux</td><td>None</td><td></td></tr>
+  <tr><td>Pure Dart</td><td>None</td><td>Import <code>core.dart</code>; it does not import Flutter.</td></tr>
+</table>
+<h2>Keyboard, mouse and touch</h2>
+<p>On desktop and web, the arrow keys move between days, Page Up and Page Down change the page, and you can
+drag pages with the mouse or swipe with a trackpad. On touch devices all gestures work as expected.</p>
+
+<h1 class="section"><span class="num">9</span>Updating, pinning and removing</h1>
+<table>
+  <tr><th>Task</th><th>Command</th></tr>
+  <tr><td>See if a newer version exists</td><td><code>flutter pub outdated</code></td></tr>
+  <tr><td>Update within your version range</td><td><code>flutter pub upgrade chronoverse</code></td></tr>
+  <tr><td>Move to the newest major version</td><td><code>flutter pub upgrade --major-versions chronoverse</code></td></tr>
+  <tr><td>Pin an exact version</td><td><code>chronoverse: {{VERSION}}</code> in pubspec.yaml</td></tr>
+  <tr><td>Remove the package</td><td><code>flutter pub remove chronoverse</code></td></tr>
+</table>
+<div class="warn">Before updating, read the changelog on the package page. Major versions may contain
+breaking changes. Always re-test your app, and re-verify any date calculations it depends on.</div>
+
+<h1 class="section"><span class="num">10</span>Troubleshooting</h1>
+<table>
+  <tr><th>Problem</th><th>Solution</th></tr>
+  <tr><td><code>flutter</code> is not recognised</td><td>Flutter's <code>bin</code> folder is not on your PATH. Repeat step 3 (macOS) or step 3 (Windows), then open a new terminal.</td></tr>
+  <tr><td>"The current Dart SDK version is …" / version solving failed</td><td>Your SDK is older than required. Run <code>flutter upgrade</code>.</td></tr>
+  <tr><td>"Target of URI doesn't exist: package:chronoverse/…"</td><td>Run <code>flutter pub get</code> and restart your editor's analysis server.</td></tr>
+  <tr><td>Windows build fails with a symlink error</td><td>Turn on Developer Mode (section 4, step 4).</td></tr>
+  <tr><td>Calendar shows English though the app is in another language</td><td>Pass <code>locale: ChronoLocale.of('fr')</code>, or set the app's <code>locale</code>; Chronoverse follows it automatically.</td></tr>
+  <tr><td>Calendar overflows inside a Column</td><td>The month view has a natural height. Put it inside a scroll view, or use <code>sixWeekMonths: true</code> for a fixed height.</td></tr>
+  <tr><td>Times look shifted by one hour</td><td>Check daylight saving and the time zone of the data. Use <code>ChronoTimeZone</code> to convert explicitly.</td></tr>
+  <tr><td>Hot reload does not pick up a theme change</td><td>Do a hot restart; theme extensions are read when the app starts.</td></tr>
+</table>
+<p>If a problem remains, open an issue on the project repository with your Flutter version
+(<code>flutter --version</code>), platform and a small code sample.</p>
+
+<h1 class="section"><span class="num">11</span>Disclaimer</h1>
+<div class="legal">{{DISCLAIMER}}</div>
+
+</body></html>

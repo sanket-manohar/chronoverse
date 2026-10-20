@@ -1,0 +1,21 @@
+# Kept in the repository but not published to the package registry.
+doc/brand/*.html
+doc/guides/src/
+example/test/
+example/build/
+.github/
+tool/
+build/
+.dart_tool/
+/pubspec.lock
+example/.dart_tool/
+example/pubspec.lock
+doc/api/
+doc/brand/banner.png
+website/
+RELEASING.md
+# Large files served from the repository and website instead.
+doc/guides/
+doc/brand/banner.jpg
+doc/screenshots/showcase*.jpg
+doc/screenshots/wide_*.png

@@ -1,0 +1,51 @@
+name: chronoverse
+description: >-
+  All-in-one calendar and date toolkit: month, week, year, schedule and planner views, range and multi pickers, typed input, time zones, recurrence and 80+ date functions.
+version: 0.1.0
+homepage: https://sanket-manohar.github.io/chronoverse/
+repository: https://github.com/sanket-manohar/chronoverse
+issue_tracker: https://github.com/sanket-manohar/chronoverse/issues
+documentation: https://pub.dev/documentation/chronoverse/latest/
+topics:
+  - calendar
+  - date-picker
+  - datetime
+  - scheduler
+  - widget
+
+environment:
+  sdk: ^3.5.0
+  flutter: ">=3.24.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+
+flutter:
+
+screenshots:
+  - description: Month calendar with events that collapses to a week
+    path: doc/screenshots/month.png
+  - description: Planner with multicolour cards and drag and drop
+    path: doc/screenshots/planner.png
+  - description: Booking calendar with prices and blocked dates
+    path: doc/screenshots/booking.png
+  - description: Typed input, dialogs, wheels and quick month picker
+    path: doc/screenshots/pickers.png
+  - description: Week schedule with drag to move and resize
+    path: doc/screenshots/schedule.png
+  - description: Range bottom sheet with presets
+    path: doc/screenshots/range_sheet.png
+  - description: Year overview and activity heatmap
+    path: doc/screenshots/year.png
+  - description: Live theming, shapes and 14 languages
+    path: doc/screenshots/theming.png
+  - description: Chrono toolbox of date functions
+    path: doc/screenshots/toolbox.png
+  - description: Dark mode
+    path: doc/screenshots/month_dark.png

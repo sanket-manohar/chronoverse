@@ -1,0 +1,545 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Chronoverse Integration Guide</title>
+<link rel="stylesheet" href="guide.css"></head><body>
+
+<section class="cover">
+  <img class="logo" src="../../brand/logo.png" alt="">
+  <h1>Chronoverse</h1>
+  <h2>Integration Guide</h2>
+  <p class="lead">How to use every calendar, picker, view and function in Chronoverse, with complete code
+  examples, theming, languages, events, time zones and best practices.</p>
+  <div class="meta">Version {{VERSION}} · {{DATE}}<br>Developed by Sanket Santosh Vidya Manohar<br>BSD 3-Clause License · Zero dependencies</div>
+  <img class="shot" src="../../screenshots/planner.png" alt="">
+</section>
+
+
+<section class="toc">
+  <h1 style="color:#312e81">Contents</h1>
+  <ol>
+    <li>Concepts and imports</li>
+    <li>The month calendar</li>
+    <li>Controlling the calendar from code</li>
+    <li>Selection, availability, freeze and disable</li>
+    <li>Events on the calendar</li>
+    <li>Planner cards and drag &amp; drop</li>
+    <li>More views: vertical, year, strip, schedule, agenda, heatmap</li>
+    <li>Pickers and typed input</li>
+    <li>Theming</li>
+    <li>Languages and right-to-left</li>
+    <li>The Chrono toolbox</li>
+    <li>Events, recurrence and iCalendar</li>
+    <li>Time zones</li>
+    <li>App architecture and state</li>
+    <li>Performance, accessibility and testing</li>
+    <li>Quick reference</li>
+    <li>Disclaimer</li>
+  </ol>
+  <div class="note">Before you start, install the package as described in the <b>Chronoverse Installation Guide</b>.</div>
+</section>
+
+<h1 class="section"><span class="num">1</span>Concepts and imports</h1>
+<p>Chronoverse has two layers:</p>
+<table>
+  <tr><th>Import</th><th>Contains</th><th>Use it for</th></tr>
+  <tr><td><code>package:chronoverse/chronoverse.dart</code></td><td>Everything: widgets, dialogs, theme, plus the whole core.</td><td>Flutter apps.</td></tr>
+  <tr><td><code>package:chronoverse/core.dart</code></td><td>Pure Dart: <code>Chrono</code>, extensions, formatting, parsing, conversions, time zones, events, recurrence, iCalendar.</td><td>Business logic, servers, command-line tools, isolates, tests.</td></tr>
+</table>
+<p>Naming is consistent: widgets start with <code>Chrono</code> (<code>ChronoCalendar</code>), dialogs with
+<code>showChrono</code>, and data classes describe what they hold (<code>DateRange</code>,
+<code>CalendarEvent</code>, <code>RecurrenceRule</code>). All dates are plain <code>DateTime</code> values; day-based
+APIs ignore the time part.</p>
+<div class="tip">Every option has a sensible default. Start with the smallest code and add options only
+when you need them.</div>
+
+<h1 class="section"><span class="num">2</span>The month calendar</h1>
+<div class="shots">
+  <figure><img src="../../screenshots/month.png">Month with events</figure>
+  <figure><img src="../../screenshots/week_collapsed.png">Collapsed to a week</figure>
+  <figure><img src="../../screenshots/quick_picker.png">Quick year/month</figure>
+</div>
+<pre><code>ChronoCalendar(
+  initialDate: DateTime(2026, 10, 1),
+  firstDay: DateTime(2020),                 <span class="c">// navigation limits</span>
+  lastDay: DateTime(2030, 12, 31),
+  mode: ChronoSelectionMode.single,         <span class="c">// none, single, multiple, range</span>
+  initialFormat: ChronoCalendarFormat.month, <span class="c">// month, twoWeeks, week</span>
+  expandable: true,                         <span class="c">// handle to expand/collapse</span>
+  formatToggle: true,                       <span class="c">// month / 2 weeks / week button</span>
+  showWeekNumbers: true,
+  sixWeekMonths: true,                      <span class="c">// constant height</span>
+  holidayPredicate: (d) =&gt; d.month == 12 &amp;&amp; d.day == 25,
+  onDaySelected: (day) =&gt; print(day),
+  onPageChanged: (focused) =&gt; print(<span class="s">'Now showing $focused'</span>),
+)</code></pre>
+<h2>What users can do</h2>
+<ul>
+  <li><b>Swipe</b> left or right (touch, mouse drag or trackpad), or use the arrows, to change month or week.</li>
+  <li><b>Tap the title</b> to open a year grid, then a month grid, to jump anywhere quickly.</li>
+  <li><b>Drag the handle</b> down to expand to a month, up to collapse to a week.</li>
+  <li><b>Use the keyboard</b>: arrows move between days, Page Up / Page Down change the page.</li>
+  <li><b>Tap "today"</b> in the header to return to the current date.</li>
+</ul>
+<h2>Header and visibility options</h2>
+<table>
+  <tr><th>Option</th><th>Default</th><th>Effect</th></tr>
+  <tr><td><code>showHeader</code></td><td>true</td><td>Title, arrows and today button.</td></tr>
+  <tr><td><code>showWeekdays</code></td><td>true</td><td>Weekday names row.</td></tr>
+  <tr><td><code>showOutsideDays</code></td><td>true</td><td>Days of neighbouring months.</td></tr>
+  <tr><td><code>showTodayButton</code></td><td>true</td><td>Shortcut back to today.</td></tr>
+  <tr><td><code>quickPickers</code></td><td>true</td><td>Tap the title for year and month grids.</td></tr>
+  <tr><td><code>swipeEnabled</code></td><td>true</td><td>Allow swiping between pages.</td></tr>
+  <tr><td><code>firstDayOfWeek</code></td><td>from locale</td><td><code>DateTime.monday</code> … <code>DateTime.sunday</code>.</td></tr>
+  <tr><td><code>weekendDays</code></td><td>from locale</td><td>Which days are coloured as weekend.</td></tr>
+  <tr><td><code>headerBuilder</code></td><td>null</td><td>Replace the header completely.</td></tr>
+</table>
+
+<h1 class="section"><span class="num">3</span>Controlling the calendar from code</h1>
+<p>Create a <code>ChronoCalendarController</code> to read and change the calendar from anywhere. It is a
+<code>ChangeNotifier</code>, so you can listen to it.</p>
+<pre><code><span class="k">final</span> controller = ChronoCalendarController(
+  focusedDay: DateTime.now(),
+  format: ChronoCalendarFormat.week,
+  mode: ChronoSelectionMode.single,
+);
+
+ChronoCalendar(controller: controller, expandable: true);
+
+controller.showWeekOf(DateTime(2026, 12, 21)); <span class="c">// collapse to that exact week</span>
+controller.expand();                          <span class="c">// full month</span>
+controller.collapse();                        <span class="c">// back to the focused week</span>
+controller.toggleExpanded();
+controller.setFormat(ChronoCalendarFormat.twoWeeks);
+controller.jumpTo(DateTime(2027, 3, 1));
+controller.nextPage();
+controller.previousPage();
+controller.today();
+
+controller.select(DateTime(2026, 10, 20));
+controller.selectRange(DateRange(DateTime(2026, 10, 1), DateTime(2026, 10, 7)));
+controller.selectDays([DateTime(2026, 10, 2), DateTime(2026, 10, 9)]);
+controller.clearSelection();
+
+controller.selectedDay;     <span class="c">// DateTime?</span>
+controller.selectedDays;    <span class="c">// Set&lt;DateTime&gt;</span>
+controller.selectedRange;   <span class="c">// DateRange?</span>
+controller.isExpanded;
+
+controller.addListener(() =&gt; print(controller.focusedDay));
+<span class="c">// Dispose it in your State.dispose().</span></code></pre>
+<div class="note">If you do not pass a controller, the calendar creates and disposes its own.</div>
+
+<h1 class="section"><span class="num">4</span>Selection, availability, freeze and disable</h1>
+<h2>Selection modes</h2>
+<table>
+  <tr><th>Mode</th><th>Callback</th><th>Result</th></tr>
+  <tr><td><code>ChronoSelectionMode.none</code></td><td><code>onDaySelected</code> (optional)</td><td>Taps are reported, nothing stays selected.</td></tr>
+  <tr><td><code>ChronoSelectionMode.single</code></td><td><code>onDaySelected</code></td><td><code>DateTime</code></td></tr>
+  <tr><td><code>ChronoSelectionMode.multiple</code></td><td><code>onDaysSelected</code></td><td><code>Set&lt;DateTime&gt;</code></td></tr>
+  <tr><td><code>ChronoSelectionMode.range</code></td><td><code>onRangeSelected</code></td><td><code>DateRange?</code> (null after the first tap)</td></tr>
+</table>
+<pre><code>ChronoCalendar(
+  mode: ChronoSelectionMode.range,
+  maxRangeDays: 14,           <span class="c">// days beyond the limit are greyed while picking</span>
+  onRangeSelected: (range) {
+    <span class="k">if</span> (range != <span class="k">null</span>) print(<span class="s">'${range.lengthInDays} days'</span>);
+  },
+)</code></pre>
+<h2>Which days can be picked</h2>
+<p><code>DateAvailability</code> describes blocked and allowed days in one object. It is shared by the
+calendar, the dialogs, the date field, the strip and the vertical calendar.</p>
+<pre><code><span class="k">final</span> availability = DateAvailability(
+  disablePast: <span class="k">true</span>,
+  disabledWeekdays: {DateTime.sunday},
+  disabledDates: [DateTime(2026, 12, 25)],
+  disabledRanges: [DateRange(DateTime(2026, 11, 3), DateTime(2026, 11, 6))],
+  predicate: (day) =&gt; day.day != 13,     <span class="c">// any rule</span>
+);
+
+availability.isAvailable(DateTime(2026, 12, 25));   <span class="c">// false</span>
+availability.isRangeAvailable(someRange);           <span class="c">// false if any day inside is blocked</span>
+availability.nextAvailable(DateTime.now());         <span class="c">// first free day</span>
+
+ChronoCalendar(availability: availability);</code></pre>
+<p>To allow <i>only</i> certain days, use <code>enabledDates</code>. A range that would cross a blocked day
+is rejected automatically.</p>
+<h2>Freeze, read-only and disabled</h2>
+<table>
+  <tr><th>State</th><th>How</th><th>Navigation</th><th>Selection</th><th>Look</th></tr>
+  <tr><td>Normal</td><td>default</td><td>yes</td><td>yes</td><td>normal</td></tr>
+  <tr><td>Frozen</td><td><code>controller.freeze()</code></td><td>no</td><td>no</td><td>normal</td></tr>
+  <tr><td>Read-only</td><td><code>readOnly: true</code></td><td>yes</td><td>no</td><td>normal</td></tr>
+  <tr><td>Disabled</td><td><code>enabled: false</code></td><td>no</td><td>no</td><td>greyed out</td></tr>
+</table>
+<p>Freezing is ideal while a request is in progress: call <code>freeze()</code> before it and
+<code>unfreeze()</code> after. Check the state with <code>controller.isFrozen</code>.</p>
+
+<h1 class="section"><span class="num">5</span>Events on the calendar</h1>
+<p>Pass a list of <code>CalendarEvent</code> objects, or an <code>eventLoader</code> that returns items for a day.
+Repeating events are expanded automatically and indexed once per visible page, so even thousands of
+events stay fast.</p>
+<pre><code><span class="k">final</span> events = [
+  CalendarEvent.allDay(id: <span class="s">'1'</span>, title: <span class="s">'Holiday'</span>, start: DateTime(2026, 10, 2), color: 0xFF10B981),
+  CalendarEvent(
+    id: <span class="s">'2'</span>,
+    title: <span class="s">'Design review'</span>,
+    start: DateTime(2026, 10, 14, 10),
+    end: DateTime(2026, 10, 14, 11, 30),
+    color: 0xFF6366F1,
+    recurrence: RecurrenceRule.weekly,
+  ),
+];
+
+ChronoCalendar(
+  events: events,
+  markerStyle: ChronoMarkerStyle.dots,   <span class="c">// dots, bars or chips</span>
+  onDaySelected: (day) =&gt; print(events.on(day).map((o) =&gt; o.event.title)),
+);
+
+<span class="c">// Or load anything you like:</span>
+ChronoCalendar(eventLoader: (day) =&gt; myDatabase.itemsFor(day));</code></pre>
+<p>Each event's <code>color</code> is used for its marker; otherwise <code>markerColor</code> or the theme's
+<code>eventColor</code> is used.</p>
+
+<h1 class="section"><span class="num">6</span>Planner cards and drag &amp; drop</h1>
+<div class="shots">
+  <figure><img src="../../screenshots/planner.png">Planner with cards</figure>
+  <figure><img src="../../screenshots/theming.png">Shapes and colours</figure>
+</div>
+<p>Set <code>markerStyle: ChronoMarkerStyle.chips</code> to show titled, coloured cards inside each day. Give
+the cells more height so the cards fit.</p>
+<pre><code>ChronoCalendar(
+  events: events,
+  markerStyle: ChronoMarkerStyle.chips,
+  chipStyle: <span class="k">const</span> ChronoChipStyle(
+    shape: ChronoChipShape.accentBar,  <span class="c">// rounded, pill, square, accentBar, outlined</span>
+    height: 16,
+    fontSize: 10,
+  ),
+  theme: <span class="k">const</span> ChronoThemeData(cellHeight: 92, dayShape: ChronoDayShape.square, cellPadding: 0),
+  onItemTap: (item) =&gt; openDetails(item),
+  onDrop: (day, data) =&gt; handleDrop(day, data),
+  canDrop: (day, data) =&gt; !day.isWeekend(),  <span class="c">// optional rule</span>
+)</code></pre>
+<h2>Dragging notes in from your UI</h2>
+<p>Wrap any widget in <code>ChronoDragItem</code>. Long-press (or drag directly with <code>longPress: false</code>) and
+drop it on a day. The target day highlights while hovering.</p>
+<pre><code>ChronoDragItem&lt;String&gt;(
+  data: <span class="s">'Pay rent'</span>,
+  child: Chip(label: Text(<span class="s">'Pay rent'</span>)),
+);
+
+<span class="k">void</span> handleDrop(DateTime day, Object data) {
+  <span class="k">if</span> (data <span class="k">is</span> String) {
+    setState(() =&gt; events.add(CalendarEvent.allDay(id: uuid(), title: data, start: day, color: 0xFFF59E0B)));
+  } <span class="k">else if</span> (data <span class="k">is</span> EventOccurrence) {
+    <span class="c">// A card was moved from another day: shift the event.</span>
+    <span class="k">final</span> shift = data.start.daysUntil(day);
+    <span class="c">// update data.event.start / end by shift days and save</span>
+  }
+}</code></pre>
+<p>Cards that do not fit show a "+n" indicator. Your own objects work too: return them from
+<code>eventLoader</code> and provide <code>itemLabel</code> to give each one a title.</p>
+
+<h1 class="section"><span class="num">7</span>More views</h1>
+<div class="shots">
+  <figure><img src="../../screenshots/booking.png">Vertical (booking)</figure>
+  <figure><img src="../../screenshots/schedule.png">Schedule</figure>
+  <figure><img src="../../screenshots/agenda.png">Agenda</figure>
+</div>
+<h2>Vertical calendar (bookings)</h2>
+<pre><code>ChronoVerticalCalendar(
+  mode: ChronoSelectionMode.range,
+  availability: DateAvailability(disablePast: <span class="k">true</span>),
+  lastDay: DateTime.now().addMonths(6),
+  dayLabelBuilder: (context, day) =&gt; Text(<span class="s">'\$${priceFor(day)}'</span>),
+  onRangeSelected: (range) =&gt; setState(() =&gt; stay = range),
+)</code></pre>
+<h2>Schedule (day, 3-day, week)</h2>
+<pre><code>ChronoScheduleView(
+  date: DateTime.now().startOfWeek(),
+  numberOfDays: 5,
+  events: events,
+  startHour: 7, endHour: 21, hourHeight: 56,
+  initialScrollHour: 8,
+  workHours: (9, 18),
+  blockedSlots: [DateRangeTime(lunchStart, lunchEnd)],
+  snap: <span class="k">const</span> Duration(minutes: 15),
+  enableDrag: <span class="k">true</span>, enableResize: <span class="k">true</span>,
+  onEventMoved: (occurrence, start, end) =&gt; save(occurrence.event.copyWith(start: start, end: end)),
+  onSlotTap: (time) =&gt; createEventAt(time),
+)</code></pre>
+<p>Overlapping events are laid out side by side, all-day events get their own row, and a line marks the
+current time. Long-press an event to move it; drag its bottom edge to resize.</p>
+<h2>Year view, week strip, agenda and heatmap</h2>
+<pre><code>ChronoYearView(year: 2026, onMonthTap: openMonth, eventLoader: (d) =&gt; events.on(d));
+
+ChronoWeekStrip(selectedDate: day, onDateSelected: (d) =&gt; setState(() =&gt; day = d));
+
+ChronoAgendaView(events: events, range: DateRange(today, today.addDays(14)), onEventTap: open);
+
+ChronoHeatmap(values: {DateTime(2026, 10, 1): 4, DateTime(2026, 10, 2): 9}, onDayTap: (day, value) =&gt; showDay(day));</code></pre>
+<div class="shots">
+  <figure><img src="../../screenshots/year.png">Year and heatmap</figure>
+  <figure><img src="../../screenshots/strip.png">Strip and free slots</figure>
+  <figure><img src="../../screenshots/schedule_dark.png">Schedule, dark</figure>
+</div>
+
+<h1 class="section"><span class="num">8</span>Pickers and typed input</h1>
+<div class="shots">
+  <figure><img src="../../screenshots/pickers.png">Field, wheels, months</figure>
+  <figure><img src="../../screenshots/date_dialog.png">Date dialog</figure>
+  <figure><img src="../../screenshots/range_sheet.png">Range sheet</figure>
+</div>
+<h2>Dialogs and sheets</h2>
+<pre><code><span class="k">final</span> date = <span class="k">await</span> showChronoDatePicker(
+  context: context,
+  initialDate: DateTime.now(),
+  availability: DateAvailability(disablePast: <span class="k">true</span>),
+  presentation: ChronoPresentation.dialog,   <span class="c">// or bottomSheet</span>
+  allowTyping: <span class="k">true</span>,                         <span class="c">// switch to a text field</span>
+);
+
+<span class="k">final</span> range = <span class="k">await</span> showChronoRangePicker(
+  context: context,
+  presets: ChronoRangePreset.common,         <span class="c">// Today, Last 7 days, This month…</span>
+  maxDays: 30,
+  presentation: ChronoPresentation.bottomSheet,
+);
+
+<span class="k">final</span> days = <span class="k">await</span> showChronoMultiDatePicker(context: context);
+<span class="k">final</span> birthday = <span class="k">await</span> showChronoWheelPicker(context: context, lastDate: DateTime.now());</code></pre>
+<p>Custom presets: <code>ChronoRangePreset('Next 3 days', (today) =&gt; DateRange(today, today.addDays(2)))</code>.</p>
+<h2>Typed date field</h2>
+<pre><code>ChronoDateField(
+  pattern: <span class="s">'dd/MM/yyyy'</span>,                     <span class="c">// mask and validation</span>
+  firstDate: DateTime(1900),
+  lastDate: DateTime.now(),
+  allowNaturalLanguage: <span class="k">true</span>,                <span class="c">// "next friday", "in 3 days"</span>
+  showPickerButton: <span class="k">true</span>,
+  required: <span class="k">true</span>,
+  decoration: <span class="k">const</span> InputDecoration(labelText: <span class="s">'Date of birth'</span>),
+  onChanged: (date) =&gt; form.dob = date,      <span class="c">// null while invalid</span>
+)</code></pre>
+<p>It works inside a <code>Form</code> and shows localized messages for invalid or out-of-range dates.</p>
+<h2>Wheels and quick grids</h2>
+<pre><code>ChronoDateWheelPicker(
+  initialDate: DateTime(1995, 3, 10),
+  order: ChronoWheelOrder.dmy,      <span class="c">// dmy, mdy, ymd</span>
+  lastDate: DateTime.now(),
+  onChanged: (d) =&gt; print(d),       <span class="c">// Feb 29 → Feb 28 in non-leap years</span>
+);
+ChronoMonthPicker(year: 2026, onMonthSelected: (m) =&gt; print(m));
+ChronoYearPicker(firstYear: 1950, lastYear: 2050, selectedYear: 2026, onYearSelected: print);</code></pre>
+
+<h1 class="section"><span class="num">9</span>Theming</h1>
+<p><code>ChronoThemeData</code> controls every visual detail. Unset colours are taken from your app's
+<code>ColorScheme</code>, so light and dark mode work automatically.</p>
+<pre><code><span class="c">// App-wide</span>
+MaterialApp(
+  theme: ThemeData(
+    colorSchemeSeed: Colors.teal,
+    extensions: <span class="k">const</span> [ChronoThemeData(dayShape: ChronoDayShape.rounded, dayRadius: 12, cellHeight: 48)],
+  ),
+);
+
+<span class="c">// One widget</span>
+ChronoCalendar(theme: ChronoThemeData.fromSeed(Colors.deepOrange));
+
+<span class="c">// A subtree</span>
+ChronoTheme(data: <span class="k">const</span> ChronoThemeData(dayShape: ChronoDayShape.square), child: myScreen);</code></pre>
+<table>
+  <tr><th>Group</th><th>Properties</th></tr>
+  <tr><td>Colours</td><td><code>primaryColor</code> <code>onPrimaryColor</code> <code>backgroundColor</code> <code>textColor</code> <code>mutedTextColor</code> <code>todayColor</code> <code>rangeColor</code> <code>disabledColor</code> <code>weekendTextColor</code> <code>holidayTextColor</code> <code>eventColor</code> <code>borderColor</code></td></tr>
+  <tr><td>Shape</td><td><code>dayShape</code> (circle, rounded, square, stadium) <code>dayRadius</code> <code>todayBorderWidth</code> <code>decoration</code></td></tr>
+  <tr><td>Size</td><td><code>cellHeight</code> <code>cellPadding</code> <code>headerHeight</code> <code>weekdayRowHeight</code> <code>markerSize</code> <code>maxMarkers</code></td></tr>
+  <tr><td>Text</td><td><code>dayTextStyle</code> <code>headerTextStyle</code> <code>weekdayTextStyle</code> <code>weekdayStyle</code> (narrow, short, full)</td></tr>
+  <tr><td>Motion</td><td><code>animationDuration</code> <code>animationCurve</code></td></tr>
+</table>
+<h2>Custom cells</h2>
+<p>Builders receive a <code>ChronoDayState</code> (<code>date</code>, <code>isToday</code>, <code>isSelected</code>,
+<code>isRangeStart</code>, <code>isRangeEnd</code>, <code>isInRange</code>, <code>isDisabled</code>, <code>isOutside</code>,
+<code>isWeekend</code>, <code>isHoliday</code>, <code>markerColors</code>, <code>items</code>). Return <code>null</code> to keep the
+default cell.</p>
+<pre><code>ChronoCalendar(
+  dayBuilder: (context, s) =&gt; s.isHoliday ? HolidayCell(s.date) : <span class="k">null</span>,
+  dayLabelBuilder: (context, day) =&gt; Text(<span class="s">'•'</span>),
+  weekdayBuilder: (context, weekday) =&gt; Text(<span class="s">'$weekday'</span>),
+)</code></pre>
+
+<h1 class="section"><span class="num">10</span>Languages and right-to-left</h1>
+<p>Fourteen languages are built in: <code>en es fr de it pt ru ar hi mr zh ja ko tr</code>. Each one provides month
+and weekday names, the first day of the week, weekend days, date order, plural rules, relative-time phrases,
+button labels and native digits.</p>
+<pre><code><span class="c">// Follows the app's locale automatically, or set it:</span>
+ChronoCalendar(locale: ChronoLocale.of(<span class="s">'ar'</span>), nativeDigits: <span class="k">true</span>);
+
+Chrono.format(DateTime.now(), <span class="s">'EEEE d MMMM yyyy'</span>, locale: <span class="s">'de'</span>);   <span class="c">// Dienstag 20 Oktober 2026</span>
+Chrono.timeAgo(DateTime.now().subtract(<span class="k">const</span> Duration(hours: 5)), locale: <span class="s">'fr'</span>);</code></pre>
+<p>Right-to-left languages mirror automatically under a right-to-left <code>Directionality</code>, including
+swipe direction and arrow keys.</p>
+<h2>Adding a language</h2>
+<p>Create a <code>ChronoLocale</code> with your translations (copy a built-in one as a starting point) and register
+it once at start-up:</p>
+<pre><code>ChronoLocale.register(myLocale);
+ChronoLocale.of(myLocale.code);   <span class="c">// now available everywhere</span></code></pre>
+
+<h1 class="section"><span class="num">11</span>The Chrono toolbox</h1>
+<p><code>Chrono</code> collects every date and time function in one place. Most are also available as
+<code>DateTime</code> extensions.</p>
+<div class="shots wide"><figure><img src="../../screenshots/showcase4.jpg" style="width:160mm"></figure></div>
+<table>
+  <tr><th>Area</th><th>Functions</th></tr>
+  <tr><td>Basics</td><td><code>now</code> <code>today</code> <code>tomorrow</code> <code>yesterday</code> <code>isLeapYear</code> <code>daysInMonth</code> <code>daysInYear</code> <code>weekNumber</code> <code>weeksInYear</code> <code>quarter</code> <code>dayOfYear</code> <code>isWeekend</code> <code>isPast</code> <code>isFuture</code> <code>isSameDay</code> <code>isValidDate</code> <code>isValidYmd</code></td></tr>
+  <tr><td>Arithmetic</td><td><code>addDays</code> <code>addWeeks</code> <code>addMonths</code> <code>addYears</code> <code>addBusinessDays</code> <code>businessDaysBetween</code> <code>daysBetween</code> <code>weeksBetween</code> <code>monthsBetween</code> <code>yearsBetween</code> <code>difference</code> <code>age</code> <code>nextAnniversary</code> <code>datesBetween</code> <code>monthMatrix</code> <code>easter</code> <code>nthWeekday</code></td></tr>
+  <tr><td>Format &amp; parse</td><td><code>format</code> <code>parse</code> <code>parseNatural</code> <code>timeAgo</code> <code>formatDuration</code> <code>formatHms</code> <code>countdown</code> <code>monthNames</code> <code>weekdayNames</code></td></tr>
+  <tr><td>Conversions</td><td><code>toHijri</code> <code>toPersian</code> <code>toIndianNational</code> <code>toBuddhist</code> <code>toJulianCalendar</code> <code>fromCalendar</code> <code>toJulianDay</code> <code>toUnix</code> <code>fromUnix</code> <code>toUnixMillis</code> <code>fromUnixMillis</code> <code>toSpreadsheetSerial</code> <code>fromSpreadsheetSerial</code> <code>atOffset</code> <code>convertOffset</code> <code>toIso</code> <code>fromIso</code></td></tr>
+  <tr><td>Time of day</td><td><code>minutesOfDay</code> <code>isTimeBetween</code> <code>roundTime</code> <code>partOfDay</code></td></tr>
+  <tr><td>Extras</td><td><code>zodiacSign</code> <code>chineseZodiac</code> <code>moonPhase</code> <code>moonPhaseName</code></td></tr>
+</table>
+<h2>Examples</h2>
+<pre><code>Chrono.addMonths(DateTime(2025, 1, 31), 1);      <span class="c">// 2025-02-28, never spills into March</span>
+Chrono.addYears(DateTime(2024, 2, 29), 1);       <span class="c">// 2025-02-28</span>
+Chrono.age(DateTime(2000, 2, 29));               <span class="c">// whole years, leap-day safe</span>
+Chrono.difference(start, end);                   <span class="c">// years, months, days, hours…</span>
+Chrono.businessDaysBetween(a, b, holidays: holidays);
+Chrono.isTimeBetween(now, <span class="s">'22:00'</span>, <span class="s">'06:00'</span>);       <span class="c">// night shift, crosses midnight</span>
+Chrono.format(now, <span class="s">"EEE, d MMM yyyy 'at' h:mm a"</span>);
+Chrono.parse(<span class="s">'12/25/26'</span>, <span class="s">'MM/dd/yy'</span>);
+Chrono.parseNatural(<span class="s">'end of month'</span>);
+Chrono.toPersian(now);                           <span class="c">// CalendarDate(year, month, day)</span>
+Chrono.fromCalendar(CalendarDate(CalendarSystem.hijri, 1448, 9, 1));</code></pre>
+<h2>Format pattern letters</h2>
+<table>
+  <tr><th>Token</th><th>Meaning</th><th>Token</th><th>Meaning</th></tr>
+  <tr><td><code>yyyy yy</code></td><td>year</td><td><code>HH H</code></td><td>hour 0–23</td></tr>
+  <tr><td><code>MMMM MMM MM M</code></td><td>month name / number</td><td><code>hh h</code></td><td>hour 1–12</td></tr>
+  <tr><td><code>dd d do</code></td><td>day / ordinal day</td><td><code>mm m</code></td><td>minute</td></tr>
+  <tr><td><code>EEEE EEE E</code></td><td>weekday name</td><td><code>ss s SSS</code></td><td>second / millisecond</td></tr>
+  <tr><td><code>Q</code></td><td>quarter</td><td><code>a</code></td><td>AM / PM</td></tr>
+  <tr><td><code>w</code></td><td>ISO week</td><td><code>Z</code></td><td>UTC offset</td></tr>
+  <tr><td><code>D</code></td><td>day of year</td><td><code>'text'</code></td><td>literal text</td></tr>
+</table>
+
+<h1 class="section"><span class="num">12</span>Events, recurrence and iCalendar</h1>
+<p><code>CalendarEvent</code> carries everything a full calendar system needs.</p>
+<table>
+  <tr><th>Field</th><th>Purpose</th></tr>
+  <tr><td><code>id</code> <code>title</code> <code>description</code> <code>location</code> <code>color</code></td><td>Basics.</td></tr>
+  <tr><td><code>start</code> <code>end</code> <code>isAllDay</code> <code>timeZone</code></td><td>When, in which zone.</td></tr>
+  <tr><td><code>recurrence</code> <code>exceptionDates</code> <code>additionalDates</code></td><td>Repeating rules, skipped and extra dates.</td></tr>
+  <tr><td><code>organizer</code> <code>attendees</code></td><td>People, with responses, optional flag and resources (rooms).</td></tr>
+  <tr><td><code>reminders</code></td><td>Notification, email or popup, any time before.</td></tr>
+  <tr><td><code>status</code> <code>visibility</code> <code>showAs</code> <code>type</code></td><td>Confirmed / tentative / cancelled, public / private, busy / free, normal / out of office / focus time / working location / birthday / task / reminder.</td></tr>
+  <tr><td><code>url</code> <code>meetingUrl</code> <code>calendarId</code> <code>data</code></td><td>Links, owning calendar, and any custom payload of your own type.</td></tr>
+</table>
+<pre><code><span class="k">final</span> rule = RecurrenceRule.parse(<span class="s">'FREQ=MONTHLY;BYDAY=-1FR;COUNT=12'</span>);
+rule.describe();                                  <span class="c">// "Every month on the last Fri, 12 times"</span>
+rule.occurrences(DateTime(2026, 1, 30)).take(3);
+
+RecurrenceRule.weekly.copyWith(byWeekdays: [ByWeekday(DateTime.monday), ByWeekday(DateTime.thursday)]);
+RecurrenceRule.weekdays;                          <span class="c">// also daily, weekly, monthly, yearly</span>
+
+events.occurrencesIn(DateRange.month(DateTime.now()));   <span class="c">// expanded, sorted</span>
+events.groupByDay(DateRange.month(DateTime.now()));      <span class="c">// Map&lt;DateTime, List&lt;EventOccurrence&gt;&gt;</span>
+events.search(<span class="s">'review'</span>);
+events.involving(<span class="s">'sam@example.com'</span>);
+
+Schedule.freeSlots(events.on(today), from: today.atTime(9), to: today.atTime(17));
+Schedule.slots(from: today.atTime(9), to: today.atTime(17),
+    length: <span class="k">const</span> Duration(minutes: 30), busy: events.on(today));
+
+<span class="k">final</span> text = ICalendar.encode(events, calendarName: <span class="s">'Team'</span>);  <span class="c">// .ics export</span>
+<span class="k">final</span> imported = ICalendar.decode(text);                      <span class="c">// .ics import</span></code></pre>
+
+<h1 class="section"><span class="num">13</span>Time zones</h1>
+<p><code>ChronoTimeZone</code> includes about 60 common zones with daylight-saving rules for North America,
+Europe, Australia and New Zealand. Gaps (clocks jump forward) and overlaps (clocks fall back) are handled.</p>
+<pre><code><span class="k">final</span> kolkata = ChronoTimeZone.get(<span class="s">'Asia/Kolkata'</span>);
+<span class="k">final</span> newYork = ChronoTimeZone.get(<span class="s">'America/New_York'</span>);
+
+<span class="k">final</span> meeting = kolkata.fromWall(2026, 10, 20, 19, 30);   <span class="c">// ZonedDateTime</span>
+kolkata.convert(DateTime(2026, 10, 20, 19, 30), newYork);  <span class="c">// same instant in New York</span>
+newYork.isDst(DateTime.now().toUtc());
+newYork.offsetLabel(DateTime.now().toUtc());               <span class="c">// UTC-04:00</span>
+ChronoTimeZone.ids;                                        <span class="c">// every known id</span>
+
+<span class="c">// Add or override a zone</span>
+ChronoTimeZone.register(<span class="k">const</span> ChronoTimeZone(<span class="s">'Europe/Example'</span>, Duration(hours: 1), dst: DstRule.europe));
+
+<span class="c">// Fixed offsets</span>
+ZonedDateTime.tryParse(<span class="s">'2026-10-20T09:00:00+05:30'</span>);</code></pre>
+<div class="warn">Time-zone rules change by government decision. Keep the package up to date and verify any
+time-critical conversion. Register a corrected zone with <code>ChronoTimeZone.register</code> if a rule
+changes before an update is available.</div>
+
+<h1 class="section"><span class="num">14</span>App architecture and state</h1>
+<ul>
+  <li><b>Keep dates in your state, not in widgets.</b> Store the selected date or range in your own state
+  object and pass it down, or listen to a <code>ChronoCalendarController</code>.</li>
+  <li><b>The controller is a <code>ChangeNotifier</code></b>, so it fits any state-management approach that
+  works with listenable objects, including plain <code>setState</code>, <code>ValueListenableBuilder</code> /
+  <code>ListenableBuilder</code>, and inherited widgets.</li>
+  <li><b>Put business rules in the core.</b> Availability, recurrence and date math come from
+  <code>core.dart</code>, so they can be unit-tested without widgets and reused on a server.</li>
+  <li><b>Store dates in UTC or ISO 8601</b> (<code>Chrono.toIso</code>) and convert to local or zoned time only for
+  display.</li>
+  <li><b>Use <code>data</code></b> on <code>CalendarEvent&lt;T&gt;</code> to carry your own model, so callbacks give you
+  your object back without lookups.</li>
+</ul>
+<pre><code>ListenableBuilder(
+  listenable: controller,
+  builder: (context, _) =&gt; Text(Chrono.format(controller.focusedDay, <span class="s">'MMMM yyyy'</span>)),
+)</code></pre>
+
+<h1 class="section"><span class="num">15</span>Performance, accessibility and testing</h1>
+<h2>Performance</h2>
+<ul>
+  <li>Pass <code>events</code> rather than a slow <code>eventLoader</code>; Chronoverse indexes them per page.</li>
+  <li>If you use <code>eventLoader</code>, make it a fast map lookup (for example from <code>groupByDay</code>).</li>
+  <li>Keep the same list instance when nothing changed, and create a new list when something did.</li>
+  <li>Use <code>const ChronoThemeData(...)</code> where possible.</li>
+</ul>
+<h2>Accessibility</h2>
+<ul>
+  <li>Every day has a screen-reader label with the full date and its state (selected, today, unavailable).</li>
+  <li>Text scales with the system font size without overflowing.</li>
+  <li>All interaction is available from the keyboard, and colours come from your accessible color scheme.</li>
+</ul>
+<h2>Testing your integration</h2>
+<pre><code>testWidgets(<span class="s">'picks a day'</span>, (tester) <span class="k">async</span> {
+  DateTime? picked;
+  <span class="k">await</span> tester.pumpWidget(MaterialApp(home: Scaffold(body: ChronoCalendar(
+    initialDate: DateTime(2026, 10, 1),
+    onDaySelected: (d) =&gt; picked = d,
+  ))));
+  <span class="k">await</span> tester.tap(find.text(<span class="s">'15'</span>));
+  expect(picked, DateTime(2026, 10, 15));
+});</code></pre>
+<p>Pass a fixed <code>initialDate</code> in tests so results do not depend on the current day.</p>
+
+<h1 class="section"><span class="num">16</span>Quick reference</h1>
+<table>
+  <tr><th>I want to…</th><th>Use</th></tr>
+  <tr><td>Show a month and pick a day</td><td><code>ChronoCalendar(onDaySelected: …)</code></td></tr>
+  <tr><td>Pick a range</td><td><code>mode: ChronoSelectionMode.range</code> or <code>showChronoRangePicker</code></td></tr>
+  <tr><td>Pick several days</td><td><code>mode: ChronoSelectionMode.multiple</code> or <code>showChronoMultiDatePicker</code></td></tr>
+  <tr><td>Show one week, expand on tap</td><td><code>expandable: true</code> + <code>controller.showWeekOf(day)</code></td></tr>
+  <tr><td>Jump quickly to a year</td><td>Tap the title, or <code>ChronoYearPicker</code></td></tr>
+  <tr><td>Let users type a date</td><td><code>ChronoDateField</code></td></tr>
+  <tr><td>Birthday input</td><td><code>ChronoDateWheelPicker</code> or <code>showChronoWheelPicker</code></td></tr>
+  <tr><td>Hotel or travel booking</td><td><code>ChronoVerticalCalendar</code> + <code>DateAvailability</code></td></tr>
+  <tr><td>Appointment slots</td><td><code>ChronoWeekStrip</code> + <code>Schedule.slots</code></td></tr>
+  <tr><td>Day or week planner</td><td><code>ChronoScheduleView</code></td></tr>
+  <tr><td>Notes and cards on days</td><td><code>markerStyle: ChronoMarkerStyle.chips</code> + <code>ChronoDragItem</code></td></tr>
+  <tr><td>Upcoming list</td><td><code>ChronoAgendaView</code></td></tr>
+  <tr><td>Habit or activity tracker</td><td><code>ChronoHeatmap</code></td></tr>
+  <tr><td>Block days</td><td><code>DateAvailability</code></td></tr>
+  <tr><td>Lock the calendar</td><td><code>controller.freeze()</code>, <code>readOnly</code>, <code>enabled: false</code></td></tr>
+  <tr><td>Any date calculation</td><td><code>Chrono.*</code></td></tr>
+  <tr><td>Import / export calendars</td><td><code>ICalendar.decode</code> / <code>ICalendar.encode</code></td></tr>
+</table>
+
+<h1 class="section"><span class="num">17</span>Disclaimer</h1>
+<div class="legal">{{DISCLAIMER}}</div>
+
+</body></html>
