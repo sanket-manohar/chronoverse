@@ -1,6 +1,6 @@
 name: Release
 
-# Push a tag such as v0.1.0 to publish that version to pub.dev and create a
+# Push a tag such as v1.0.0 to publish that version to pub.dev and create a
 # release with the PDF guides attached. The tag must match pubspec.yaml.
 on:
   push:

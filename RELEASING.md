@@ -22,7 +22,7 @@
 2. If the guides changed, rebuild the PDFs in `doc/guides/` and commit them.
 3. Commit, then tag and push:
    ```bash
-   git tag v0.1.1
+   git tag v1.0.1
    git push origin main --tags
    ```
 4. The `Release` workflow checks that the tag matches the pubspec version, runs analysis and tests,

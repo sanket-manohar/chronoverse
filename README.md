@@ -83,7 +83,7 @@ or add it to `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  chronoverse: ^0.1.0
+  chronoverse: ^1.0.0
 ```
 
 No platform setup, no localization delegates, no initialization call. It works the same on

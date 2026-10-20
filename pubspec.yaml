@@ -1,7 +1,7 @@
 name: chronoverse
 description: >-
   All-in-one calendar and date toolkit: month, week, year, schedule and planner views, range and multi pickers, typed input, time zones, recurrence and 80+ date functions.
-version: 0.1.0
+version: 1.0.0
 homepage: https://sanket-manohar.github.io/chronoverse/
 repository: https://github.com/sanket-manohar/chronoverse
 issue_tracker: https://github.com/sanket-manohar/chronoverse/issues
