@@ -47,5 +47,5 @@ screenshots:
     path: doc/screenshots/theming.png
   - description: Chrono toolbox of date functions
     path: doc/screenshots/toolbox.png
-  - description: Dark mode
+  - description: Month calendar in dark mode
     path: doc/screenshots/month_dark.png
